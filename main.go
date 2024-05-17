@@ -153,10 +153,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controllers.OADPInstallReconciler{
+		Client:                       mgr.GetClient(),
+		Log:                          ctrl.Log.WithName("oadpinstall_controller"),
+		Scheme:                       mgr.GetScheme(),
+		RequiredCrdsPresentAtStartup: crdCheckSuccessful,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create Schedule controller")
+		os.Exit(1)
+	}
+
 	if !crdCheckSuccessful {
 		setupLog.Info("Velero CRDs are not installed, not starting BackupScheduleReconciler or RestoreReconciler controllers",
 			"crdCheckSuccessful", crdCheckSuccessful)
-		//TODO: retries?
 	} else {
 		dc, err := discovery.NewDiscoveryClientForConfig(cfg)
 		if err != nil {
